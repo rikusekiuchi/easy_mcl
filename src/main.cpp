@@ -26,7 +26,7 @@
 #define PRECASTING 1        // 1: true, 0: false
 #define SCAN_RANGE_MAX 5.6
 
-#define PARTICLE_NUM 200
+#define PARTICLE_NUM 50
 #define RATE_OF_RANDOM_PARTICLE 0.1 
 
 #define RANGE_X1 970
@@ -638,7 +638,7 @@ void Particle::export_map_image(Eigen::MatrixXd img_e){
   cv::Mat img;
   cv::eigen2cv(img_e, img);
   ROS_INFO("particle: eigen -> opencv");
-  cv::imwrite(homepath + "/catkin_ws/src/easy_mcl/map/path_map.pgm", img);
+  cv::imwrite(homepath + "/catkin_ws/src/easy_mcl/map/path_map1.pgm", img);
   ROS_INFO("particle: map exported");
 }
 
@@ -878,6 +878,8 @@ int main(int argc, char** argv){
   ros::init(argc, argv, "easy_mcl");
   ros::NodeHandle nh;
   ros::Rate rate(0.5);
+
+  ROS_INFO("Hello easy_mcl");
 
   Node n(nh);
   GlobalMap gm;
