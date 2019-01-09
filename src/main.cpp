@@ -415,30 +415,12 @@ inline int map_split(double x, double y, double th){
     int x_array_number;
     int y_array_number;
     int th_array_number;
-//  int x_array_number_2;
-//  int y_array_number_2;
-//  int th_array_number_2;
     int com_array_number;
 
-//  for (int i = 0; i < particle_num; i++){
-        x_array_number =(int)round(x / 0.1);
-        y_array_number = (int)round(y / 0.1) * 125;
-        th_array_number =(int)round(th / 5) * 125 * 56;
+    x_array_number =(int)round(x / 0.1);
+    y_array_number = (int)round(y / 0.1) * 125;
+    th_array_number =(int)round(th / 5) * 125 * 56;
         
-/*    if(y > 5.6)
-        y_array_number_2 = (y_split - 1) * x_split;
-
-    if(y <= 5.6)
-        y_array_number = y_split / 5.6 * y;
-        y_array_number_2 = y_array_number * x_split;
-
-		if(th = 360);
-        th_array_number_2 = (th_split - 1) * x_split * y_split;
-
-    if(th < 360)
-        th_array_number = th_split / 360 * (y * 3.14 / 180);
-        th_array_number_2 = th_array_number * x_split;
-*/
     com_array_number = x_array_number + y_array_number + th_array_number;
         
 };
@@ -447,66 +429,39 @@ inline int map_split(double x, double y, double th){
 
 inline int decision_particles(){
 
-    int i;
     std::vector<int> data;
-    int mx;
-    int k;
+    int mx = 0;
+    int k = 0;
     double a = 0.01;
     double b = 0.05;
-    int particle_number_m;
+    int m;
     int com_array_number;
     double sqrt_num;
     double z;
     double w;
     int v;
 
-    auto it = std::find(data.begin(), data.end(), com_array_number);
+    for (m = 0; m < mx; m++) {
 
-    if (it != data.end()){
-    std::cout << "aaa" << std::endl;
+        auto it = std::find(data.begin(), data.end(), com_array_number);
 
-    }
-/*    else {
+        if (it != data.end()){
+           
+
+        } else {
     
 
-    date.pushback(com_array_number);
-    k = k + 1;
-    v = 2 / 9 * (k - 1);
-    sqrt_num = sqrt(v);
-    z = 1 - v - v * 0.3389;
-    w = std::pow(z, 3.0);
-    mx = (k - 1) / (2 * b) * w;  
+        data.push_back(com_array_number);
+        k = k + 1;
+        v = 2 / 9 * (k - 1);
+        sqrt_num = sqrt(v);
+        z = 1 - v - v * 0.3389;
+        w = std::pow(z, 3.0);
+        mx = (k - 1) / (2 * b) * w;  
 
-    }
-
-*/
-
-
-
-
-
-
-/*    data_size = sizeof(data) / sizeof(data[0]);
-    for(i = 0, i < data_size, i++){
-        if(date[i] == com_array_number){
-            break;
         };
-
-
-          
-
-
-            date.pushback(com_array_number);
-            k = k + 1;
-            v = 2 / 9 * (k - 1);
-            sqrt_num = sqrt(v);
-            z = 1 - v - v * 0.3389;
-            w = std::pow(z, 3.0);
-            mx = (k - 1) / (2 * b) * w;  
-    
-
-*/
-}
+    };
+};
 
 
 //----------------------------------------------------------------------
