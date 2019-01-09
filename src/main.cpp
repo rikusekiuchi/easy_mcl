@@ -26,13 +26,14 @@
 #define PRECASTING 1        // 1: true, 0: false
 #define SCAN_RANGE_MAX 5.6
 
-#define PARTICLE_NUM 50
+#define PARTICLE_NUM 100
 #define RATE_OF_RANDOM_PARTICLE 0.1 
 
-#define RANGE_X1 970
-#define RANGE_Y1 850
-#define RANGE_X2 1330
-#define RANGE_Y2 1250
+#define RANGE_X1 900
+#define RANGE_Y1 500
+#define RANGE_X2 1300
+#define RANGE_Y2 1400
+#define RANGE_kari 2000
 
 class GlobalMap{
 public:
@@ -170,7 +171,7 @@ inline int is_on_global_map(Particle p, Eigen::MatrixXd global_map, double resol
   double x = p.pose(0)/resolution;
   double y = p.pose(1)/resolution;
 
-  if(check_point_within_rect(0, 0, 2047, 2047, x, -y)){
+  if(check_point_within_rect(0, 0, RANGE_kari, RANGE_kari, x, -y)){
     if(global_map(-y, x) != 205 && global_map(-y, x) != 0){
       return 1;
     }else{
@@ -253,7 +254,7 @@ inline void resampling(Particle p[], Particle p_temp[], Eigen::MatrixXd global_m
   }
 
   // ランダムパーティクルの注入
-  std::uniform_int_distribution<> x_px_range(2047-RANGE_Y2, 2047-RANGE_Y1);
+  std::uniform_int_distribution<> x_px_range(RANGE_kari-RANGE_Y2, RANGE_kari-RANGE_Y1);
   std::uniform_int_distribution<> y_px_range(RANGE_X1, RANGE_X2);
   std::uniform_int_distribution<> th_range(0, 360);
 
@@ -384,6 +385,129 @@ inline Eigen::MatrixXd raycasting(int scan_index, double range, Eigen::MatrixXd 
   }
   return img_e;
 }
+//----------------------------------------------------------------------
+
+// 地図を等間隔に分割する関数
+
+/*inline int map_split(int x_split, int y_split, int th_split){
+//K_MAX = x_split * y_split * th_split;
+//int B[K_MAX];
+	int x_split_width = X_WIDTH / x_split;
+	int y_split_width = Y_WIDTH / y_split;
+	int th_split_width = TH_WIDTH / th_split
+	
+	for (int i = 0; i < particle_count; i++){
+		particle[i].pos = 0;
+		particle[i].pos += (particle.th != TH_WIDTH) ? x_split * y_split * (int(particle.th / th_split_width) - 1) : th_split;
+		particle[i].pos += (particle)x_split * (int(particle.y / y_split_width) - 1);
+		particle[i].pos += 1 * (int(particle.x / x_split_width) + 1);
+		if Bparticle[i].pos
+	}
+
+
+}
+*/
+
+//パーティクルの位置を調べる
+
+inline int map_split(double x, double y, double th){
+
+    int x_array_number;
+    int y_array_number;
+    int th_array_number;
+//  int x_array_number_2;
+//  int y_array_number_2;
+//  int th_array_number_2;
+    int com_array_number;
+
+//  for (int i = 0; i < particle_num; i++){
+        x_array_number =(int)round(x / 0.1);
+        y_array_number = (int)round(y / 0.1) * 125;
+        th_array_number =(int)round(th / 5) * 125 * 56;
+        
+/*    if(y > 5.6)
+        y_array_number_2 = (y_split - 1) * x_split;
+
+    if(y <= 5.6)
+        y_array_number = y_split / 5.6 * y;
+        y_array_number_2 = y_array_number * x_split;
+
+		if(th = 360);
+        th_array_number_2 = (th_split - 1) * x_split * y_split;
+
+    if(th < 360)
+        th_array_number = th_split / 360 * (y * 3.14 / 180);
+        th_array_number_2 = th_array_number * x_split;
+*/
+    com_array_number = x_array_number + y_array_number + th_array_number;
+        
+};
+
+// 動的配列に入っているか否かを調べる
+
+inline int decision_particles(){
+
+    int i;
+    std::vector<int> data;
+    int mx;
+    int k;
+    double a = 0.01;
+    double b = 0.05;
+    int particle_number_m;
+    int com_array_number;
+    double sqrt_num;
+    double z;
+    double w;
+    int v;
+
+    auto it = std::find(data.begin(), data.end(), com_array_number);
+
+    if (it != data.end()){
+    std::cout << "aaa" << std::endl;
+
+    }
+/*    else {
+    
+
+    date.pushback(com_array_number);
+    k = k + 1;
+    v = 2 / 9 * (k - 1);
+    sqrt_num = sqrt(v);
+    z = 1 - v - v * 0.3389;
+    w = std::pow(z, 3.0);
+    mx = (k - 1) / (2 * b) * w;  
+
+    }
+
+*/
+
+
+
+
+
+
+/*    data_size = sizeof(data) / sizeof(data[0]);
+    for(i = 0, i < data_size, i++){
+        if(date[i] == com_array_number){
+            break;
+        };
+
+
+          
+
+
+            date.pushback(com_array_number);
+            k = k + 1;
+            v = 2 / 9 * (k - 1);
+            sqrt_num = sqrt(v);
+            z = 1 - v - v * 0.3389;
+            w = std::pow(z, 3.0);
+            mx = (k - 1) / (2 * b) * w;  
+    
+
+*/
+}
+
 
 //----------------------------------------------------------------------
 
@@ -896,11 +1020,12 @@ int main(int argc, char** argv){
   //// グローバルマップを png 形式で出力
   //gm.export_map_image(global_map);
 
-  std::uniform_int_distribution<> x_px_range(2047-RANGE_Y2, 2047-RANGE_Y1);
+  std::uniform_int_distribution<> x_px_range(RANGE_kari-RANGE_Y2, RANGE_kari-RANGE_Y1);
   std::uniform_int_distribution<> y_px_range(RANGE_X1, RANGE_X2);
   std::uniform_int_distribution<> th_range(0, 360);
 
   // パーティクル位置の初期化
+  ROS_INFO("Hello");
   for(int i=0; i<PARTICLE_NUM; i++){
     int is_on_global_map_toggle = 0;
     while(!is_on_global_map_toggle){
