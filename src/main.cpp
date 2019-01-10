@@ -26,7 +26,7 @@
 #define PRECASTING 1        // 1: true, 0: false
 #define SCAN_RANGE_MAX 5.6
 
-#define PARTICLE_NUM 100
+#define PARTICLE_NUM 10
 #define RATE_OF_RANDOM_PARTICLE 0.1 
 
 #define RANGE_X1 900
@@ -104,8 +104,8 @@ public:
   nav_msgs::Odometry::ConstPtr odom;
   void scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg);
   void odomCallback(const nav_msgs::Odometry::ConstPtr& msg);
-  void publish_particle_cloud(Particle p[]);
-  void publish_max_weight_particle(Particle p[]);
+  void publish_particle_cloud(std::vector<Particle> p);
+  void publish_max_weight_particle(std::vector<Particle> p);
   int scan_toggle;
   int odom_toggle;
 };
@@ -183,7 +183,48 @@ inline int is_on_global_map(Particle p, Eigen::MatrixXd global_map, double resol
 }
 
 
-inline void resampling(Particle p[], Particle p_temp[], Eigen::MatrixXd global_map){
+inline Particle random_pick_particle(std::vector<Particle> p, std::vector<Particle> p_init, Eigen::MatrixXd global_map){
+  
+  // 等間隔リサンプリング
+  std::random_device rnd;
+  std::mt19937 mt(rnd());
+
+  int weight_total = 0;
+  for(int i=0; i<PARTICLE_NUM; i++){
+    weight_total += p[i].weight;
+  }
+
+  int random_particle_num;
+  int resampling_particle_num;
+  if(PARTICLE_NUM >= 10){
+    random_particle_num = int(PARTICLE_NUM * RATE_OF_RANDOM_PARTICLE);
+    resampling_particle_num = PARTICLE_NUM - random_particle_num;
+  }
+
+  std::uniform_int_distribution<> rand1(0, p[0].weight);    // 範囲内の一様乱数
+  double M = double(weight_total / resampling_particle_num);
+  int r = rand1(mt);
+
+  std::vector<int> point;
+  for (int i=0; i<resampling_particle_num; i++){
+    point.push_back(int(r+(M*i)));
+  }
+
+  Particle p_next[PARTICLE_NUM];
+  int weight_sum = 0;
+  int count = 0;
+  int end_pick = 0;
+  
+  for(int i=0; i<resampling_particle_num; i++){
+    int weight_sum_temp = weight_sum; 
+    weight_sum += p[i].weight;
+    while(point[count] >= weight_sum_temp && point[count] < weight_sum && end_pick == 0){
+      return p[i];
+    }
+  }
+}
+
+inline void resampling(std::vector<Particle> p, std::vector<Particle> p_temp, Eigen::MatrixXd global_map){
   
   // 等間隔リサンプリング
   std::random_device rnd;
@@ -269,7 +310,7 @@ inline void resampling(Particle p[], Particle p_temp[], Eigen::MatrixXd global_m
   }
 }
 
-inline Particle debug_max_weight_particle(Particle p[]){
+inline Particle debug_max_weight_particle(std::vector<Particle> p){
   Particle max_weight_particle = p[0];
   int max_weight = p[0].weight;
 
@@ -422,36 +463,35 @@ inline int map_split(double x, double y, double th){
     th_array_number =(int)round(th / 5) * 125 * 56;
         
     com_array_number = x_array_number + y_array_number + th_array_number;
+
+    return com_array_number;
         
 };
 
 // 動的配列に入っているか否かを調べる
-
-inline int decision_particles(){
+/*
+inline int decision_particles(int com_split){
 
     std::vector<int> data;
     int mx = 0;
     int k = 0;
+    int com_array_number_split;
     double a = 0.01;
     double b = 0.05;
     int m;
-    int com_array_number;
     double sqrt_num;
     double z;
     double w;
     int v;
 
-    for (m = 0; m < mx; m++) {
+//  for (m = 0; m < mx; m++) {
 
-        auto it = std::find(data.begin(), data.end(), com_array_number);
+        com_array_number_split = com_split;
+        auto it = std::find(data.begin(), data.end(), com_array_number_split);
 
-        if (it != data.end()){
-           
+        if (it == data.end()){
 
-        } else {
-    
-
-        data.push_back(com_array_number);
+        data.push_back(com_array_number_split);
         k = k + 1;
         v = 2 / 9 * (k - 1);
         sqrt_num = sqrt(v);
@@ -459,9 +499,15 @@ inline int decision_particles(){
         w = std::pow(z, 3.0);
         mx = (k - 1) / (2 * b) * w;  
 
+        return mx;
+
         };
-    };
+    
+    return mx;
 };
+
+*/
+
 
 
 //----------------------------------------------------------------------
@@ -886,7 +932,7 @@ void Node::odomCallback(const nav_msgs::Odometry::ConstPtr& msg){
   odom = msg;
 }
 
-void Node::publish_particle_cloud(Particle p[]){
+void Node::publish_particle_cloud(std::vector<Particle> p){
   geometry_msgs::PoseArray pose_array;
   
   pose_array.header.stamp = ros::Time::now();
@@ -916,7 +962,7 @@ void Node::publish_particle_cloud(Particle p[]){
   pose_pub.publish(pose_array);
 }
 
-void Node::publish_max_weight_particle(Particle p[]){
+void Node::publish_max_weight_particle(std::vector<Particle> p){
   geometry_msgs::PoseArray pose_array;
 
   // 初期化
@@ -963,8 +1009,23 @@ int main(int argc, char** argv){
   Node n(nh);
   GlobalMap gm;
   LocalMap lm;
-  Particle p[PARTICLE_NUM];
-  Particle p_temp[PARTICLE_NUM];
+//  Particle p[PARTICLE_NUM];
+//  Particle p_temp[PARTICLE_NUM];
+
+  ////kld用型
+  std::vector<int> data;
+  std::vector<Particle> p(PARTICLE_NUM);
+  std::vector<Particle> p_temp(PARTICLE_NUM);
+  int m = 0;
+  double mx = 0;
+  int k = 0;
+  double v;
+  double sqrt_num;
+  double z;
+  double w;
+  double b = 0.05;
+  
+
 
   std::random_device rnd;
   std::mt19937 mt(rnd());
@@ -978,6 +1039,15 @@ int main(int argc, char** argv){
   std::uniform_int_distribution<> x_px_range(RANGE_kari-RANGE_Y2, RANGE_kari-RANGE_Y1);
   std::uniform_int_distribution<> y_px_range(RANGE_X1, RANGE_X2);
   std::uniform_int_distribution<> th_range(0, 360);
+
+  ////パーティクル数の決定
+/*  ROS_INFO("start decision particles");
+  for (int m=0; m<mx; m++){
+      map_split(x_px_range(mt), y_px_range(mt), double(th_range(mt)*3.14/180));
+      decision_particles(int com_array_number);
+
+  }
+*/
 
   // パーティクル位置の初期化
   ROS_INFO("Hello");
@@ -1043,6 +1113,32 @@ int main(int argc, char** argv){
         t.join();
       }
 
+      ////kldサンプリング
+      ROS_INFO("kld");
+      std::vector<Particle> p_init;
+      mx = 9999;
+      for(m = 0; m < mx || m < 100; m++){
+          Particle pp = random_pick_particle(p, p_temp, global_map);
+          p_init.push_back(pp);
+          int com_array_number = map_split(pp.pose(0), pp.pose(1), pp.pose(2));
+					auto it = std::find(data.begin(), data.end(), com_array_number);
+          
+          if (it == data.end()){
+              
+              data.push_back(com_array_number);
+              k = k + 1;
+              v = 2 / 9 * (k - 1);
+              sqrt_num = sqrt(v);
+              z = 1 - v - (sqrt_num * 0.3389);
+              w = std::pow(z, 3.0);
+              if (k > 1) {
+                  mx = (k - 1) / (2 * b) * w;
+              };
+
+          };
+      };
+      p = p_init;
+      ROS_INFO("KLD Particle num: %d", m);
       // Debug
       Particle max_weight_particle = debug_max_weight_particle(p);
       gm.export_map_image(max_weight_particle.global_map);
@@ -1052,7 +1148,7 @@ int main(int argc, char** argv){
       n.publish_max_weight_particle(p);
 
       ROS_INFO("particle: resamping...");
-      resampling(p, p_temp, global_map);
+      //resampling(p, p_temp, global_map);
       for(int i=0; i<PARTICLE_NUM; i++){
         p_temp[i] = p[i];
       }
